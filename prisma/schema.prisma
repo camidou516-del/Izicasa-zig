@@ -1,0 +1,16 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Inscription {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  formation String
+  createdAt DateTime @default(now())
+}
