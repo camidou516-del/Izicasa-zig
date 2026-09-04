@@ -41,7 +41,7 @@ export function ServicesSection() {
             </div>
             <h3 className="text-xl font-bold text-[#004d3d]">Se former en toute flexibilité</h3>
             <p className="text-slate-600 text-sm leading-relaxed">
-              Des parcours accessibles et des modalités flexibles pensés pour s'adapter à votre rythme, que vous soyez étudiant ou déjà en activité.
+              Des parcours accessibles et des modalités flexibles pensés pour s&apos;adapter à votre rythme, que vous soyez étudiant ou déjà en activité.
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export function ServicesSection() {
                 </div>
                 <h3 className="text-2xl font-extrabold text-[#f7e052]">Izicasa Business</h3>
                 <p className="text-emerald-100/80 text-sm leading-relaxed">
-                  Vous dirigez une équipe ? Formez-la aux outils numériques et à l'IA pour un gain de productivité immédiat. Tout démarre par un diagnostic gratuit de vos besoins.
+                  Vous dirigez une équipe ? Formez-la aux outils numériques et à l&apos;IA pour un gain de productivité immédiat. Tout démarre par un diagnostic gratuit de vos besoins.
                 </p>
               </div>
               <Link href="/contact" className="inline-flex items-center text-sm font-bold text-[#f7e052] hover:underline pt-4">

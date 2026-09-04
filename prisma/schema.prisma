@@ -14,3 +14,39 @@ model Inscription {
   formation String
   createdAt DateTime @default(now())
 }
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  phone        String
+  address      String?
+  formationSubject String?
+  password     String
+  resetToken   String?       @unique
+  resetTokenExpiry DateTime?
+  role         UserRole      @default(USER)
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+}
+
+model Reservation {
+  id             String            @id @default(cuid())
+  userId         String
+  formationTitle String
+  status         ReservationStatus @default(CONFIRMED)
+  createdAt      DateTime          @default(now())
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

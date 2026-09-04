@@ -1,4 +1,3 @@
-import React from 'react';
 import Image from 'next/image';
 import { Users, Target, Shield, Award } from 'lucide-react';
 
@@ -37,7 +36,7 @@ export default function AboutPage() {
           </span>
           <h1 className="text-4xl font-bold mb-4">À propos d&apos;Izicasa Sénégal</h1>
           <p className="max-w-2xl mx-auto text-base text-gray-200">
-            La technologie dans votre langue. Pensée pour l&apos;Afrique, bâtie pour l&apos;excellence et l&apos;saccessibilité.
+            La technologie dans votre langue. Pensée pour l&apos;Afrique, bâtie pour l&apos;excellence et l&apos;accessibilité.
           </p>
         </div>
       </section>
@@ -64,7 +63,7 @@ export default function AboutPage() {
               <span className="text-sm font-bold text-[#044c2c] uppercase tracking-wider block mb-2">Notre Vision</span>
               <h2 className="text-3xl font-bold text-slate-900 mb-6">Briser les barrières linguistiques et techniques</h2>
               <p className="text-slate-600 mb-4">
-                Izicasa Sénégal accompagne les organisations et forme les talents de demain avec des parcours pratiques et des solutions digitales modernes. Nous croyons fermement que l&apos;apprentissage des technologies doit s'adapter aux réalités et aux langues locales pour un impact durable.
+                Izicasa Sénégal accompagne les organisations et forme les talents de demain avec des parcours pratiques et des solutions digitales modernes. Nous croyons fermement que l&apos;apprentissage des technologies doit s&apos;adapter aux réalités et aux langues locales pour un impact durable.
               </p>
               <p className="text-slate-600">
                 Que vous soyez une entreprise en pleine transformation numérique ou un étudiant ambitieux, notre écosystème est conçu pour vous donner les clés de la réussite.

@@ -30,6 +30,16 @@ NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 ```
 
+Pour l'authentification et les réservations, ajoutez aussi `DATABASE_URL` avec la chaîne PostgreSQL de Supabase, `AUTH_SECRET` avec une valeur aléatoire longue, puis les variables Resend. Les variables `TWILIO_*` activent les SMS de confirmation; sans elles, la réservation est tout de même enregistrée et seul l'envoi SMS est ignoré.
+
+Après configuration de Supabase, appliquez le schéma :
+
+```bash
+npx prisma migrate dev --name add_users_and_reservations
+```
+
+Le premier compte est créé avec le rôle `USER`. Pour promouvoir un administrateur, mettez son rôle à `ADMIN` dans Supabase ou via Prisma. Le dashboard est disponible sur `/admin` et est protégé par le middleware.
+
 ## Développement local
 
 ```bash

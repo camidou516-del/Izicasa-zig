@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-// Initialisation de Resend avec ta clé API
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Remplace la ligne "const resend = new Resend(...)" à la racine du fichier par ceci :
+const resendApiKey = process.env.RESEND_API_KEY || 're_dummy_key_for_build';
+const resend = new Resend(resendApiKey);
 
 export async function POST(request: Request) {
   try {

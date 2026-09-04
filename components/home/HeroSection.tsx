@@ -21,7 +21,7 @@ export function HeroSection() {
           
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-heading tracking-tight leading-none text-white">
             VOTRE PRÉSENCE <br />
-            Digitale, <span className="text-[#f7e052]">amplifiée</span>. Pensée pour <span className="text-[#f7e052]">l'Afrique</span>.
+            Digitale, <span className="text-[#f7e052]">amplifiée</span>. Pensée pour <span className="text-[#f7e052]">l&apos;Afrique</span>.
           </h1>
           
           <p className="text-emerald-100/80 text-lg max-w-xl mx-auto lg:mx-0">
@@ -38,10 +38,10 @@ export function HeroSection() {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
             <Link 
-              href="/contact" 
-              className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold border border-emerald-400/40 bg-emerald-900/30 text-white hover:bg-emerald-900/50 transition-colors"
+              href="/formations" 
+              className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold bg-[#004d3d] border border-[#f7e052]/50 text-[#f7e052] hover:bg-[#006652] transition-colors"
             >
-              Nous contacter
+              Réserver une formation
             </Link>
           </div>
         </div>

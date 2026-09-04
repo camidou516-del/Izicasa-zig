@@ -3,6 +3,7 @@
 import React from "react";
 import { CheckCircle2, UserCheck, ShieldCheck, MessageCircle, Play } from "lucide-react";
 import { FormationRegistrationForm } from "@/components/forms/FormationRegistrationForm";
+import { ReserveButton } from "@/components/reservations/ReserveButton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 // Déclaration des interfaces
@@ -321,9 +322,10 @@ export default function CourseDetailsPage({ params }: { params: { slug: string }
               </li>
             </ul>
 
+            <ReserveButton formationTitle={course.title} />
             <Sheet>
               <SheetTrigger className="w-full bg-[#004d3d] hover:bg-[#00362b] text-white py-4 rounded-xl font-bold transition-all shadow-md text-center block cursor-pointer">
-                S&apos;inscrire au programme complet
+                Demander des informations
               </SheetTrigger>
               <SheetContent className="overflow-y-auto sm:max-w-[450px]">
                 <SheetHeader className="mb-4">
