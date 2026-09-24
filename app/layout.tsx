@@ -23,6 +23,11 @@ export const metadata: Metadata = {
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
+  icons: {
+    icon: "/logo/logo-izicasa.png",
+    shortcut: "/logo/logo-izicasa.png",
+    apple: "/logo/logo-izicasa.png",
+  },
   alternates: {
     canonical: siteUrl,
   },

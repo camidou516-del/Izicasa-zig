@@ -98,7 +98,7 @@ export function FormationRegistrationForm({ selectedFormation }: FormationRegist
       </div>
 
       <Button type="submit" className="w-full bg-[#004d3d] text-white hover:bg-[#003328]" disabled={isSubmitting}>
-        {isSubmitting ? "Envoi en cours..." : "Envoyer ma demande"}
+        {isSubmitting ? "Envoi en cours..." : "S'inscrire"}
       </Button>
 
       {status && (

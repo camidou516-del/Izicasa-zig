@@ -9,6 +9,7 @@ import {
   Radio,
   Share2,
 } from "lucide-react";
+import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Services | Izicasa Sénégal",
@@ -32,6 +33,7 @@ const servicePoles = [
     ],
     detail:
       "Nous définissons votre positionnement, vos messages, vos formats et votre calendrier avant de produire et publier des contenus mesurables.",
+    entryPrice: "Dès 350 000 FCFA",
     className: "bg-[#004d3d] text-white",
     iconClassName: "bg-[#f7e052] text-[#004d3d]",
   },
@@ -50,6 +52,7 @@ const servicePoles = [
     ],
     detail:
       "Du cadrage à la mise en ligne, nous concevons des interfaces responsive et des outils adaptés à vos utilisateurs et à votre organisation.",
+    entryPrice: "Dès 350 000 FCFA",
     className: "bg-white text-slate-900",
     iconClassName: "bg-[#004d3d] text-[#f7e052]",
   },
@@ -68,6 +71,7 @@ const servicePoles = [
     ],
     detail:
       "Nous préparons le brief, le conducteur, la production, la postproduction et les exports adaptés à vos réseaux, événements ou supports imprimés.",
+    entryPrice: "Dès 80 000 FCFA",
     className: "bg-[#f7e052] text-[#004d3d]",
     iconClassName: "bg-[#004d3d] text-[#f7e052]",
   },
@@ -79,7 +83,10 @@ const highlights = [
   { icon: Radio, label: "Contenus et diffusion" },
 ];
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const session = await getSession();
+  const isAuthenticated = Boolean(session);
+
   return (
     <main className="min-h-screen bg-slate-50 pb-20">
       <section className="w-full bg-[#004d3d] px-6 py-20 text-center text-white">
@@ -114,7 +121,7 @@ export default function ServicesPage() {
           </h2>
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
-          {servicePoles.map(({ number, icon: Icon, title, intro, services, detail, className, iconClassName }) => (
+          {servicePoles.map(({ number, icon: Icon, title, intro, services, detail, entryPrice, className, iconClassName }) => (
             <article key={title} className={`flex flex-col p-7 shadow-sm ${className}`}>
               <div className="flex items-start justify-between">
                 <div className={`flex h-12 w-12 items-center justify-center rounded-full ${iconClassName}`}>
@@ -126,17 +133,43 @@ export default function ServicesPage() {
               <p className={`mt-4 text-sm leading-relaxed ${className.includes("text-white") ? "text-emerald-50/80" : "text-slate-600"}`}>
                 {intro}
               </p>
-              <ul className="mt-6 space-y-3 border-t border-current/15 pt-6 text-sm">
-                {services.map((service) => (
-                  <li key={service} className="flex gap-3 leading-relaxed">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
-                    {service}
-                  </li>
-                ))}
-              </ul>
-              <p className={`mt-6 border-t border-current/15 pt-5 text-xs leading-relaxed ${className.includes("text-white") ? "text-emerald-50/70" : "text-slate-500"}`}>
-                {detail}
+              <p className={`mt-6 text-base font-bold ${className.includes("text-white") ? "text-[#f7e052]" : "text-[#004d3d]"}`}>
+                {entryPrice}
               </p>
+
+              {!isAuthenticated ? (
+                <>
+                  <p className={`mt-5 text-sm leading-relaxed ${className.includes("text-white") ? "text-emerald-50/80" : "text-slate-600"}`}>
+                    Connectez-vous pour débloquer le détail complet des prestations.
+                  </p>
+                  <Link
+                    href={`/login?callbackUrl=${encodeURIComponent("/services")}`}
+                    className="mt-8 inline-flex items-center justify-center gap-2 self-start bg-[#004d3d] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#003328]"
+                  >
+                    Demander un devis <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <ul className="mt-6 space-y-3 border-t border-current/15 pt-6 text-sm">
+                    {services.map((service) => (
+                      <li key={service} className="flex gap-3 leading-relaxed">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                        {service}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className={`mt-6 border-t border-current/15 pt-5 text-xs leading-relaxed ${className.includes("text-white") ? "text-emerald-50/70" : "text-slate-500"}`}>
+                    {detail}
+                  </p>
+                  <Link
+                    href="/contact"
+                    className="mt-8 inline-flex items-center justify-center gap-2 self-start bg-[#004d3d] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#003328]"
+                  >
+                    Demander un devis <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              )}
             </article>
           ))}
         </div>

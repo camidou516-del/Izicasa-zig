@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 
-// Remplace la ligne "const resend = new Resend(...)" à la racine du fichier par ceci :
-const resendApiKey = process.env.RESEND_API_KEY || 're_dummy_key_for_build';
+const resendApiKey = process.env.RESEND_API_KEY || "re_dummy_key_for_build";
 const resend = new Resend(resendApiKey);
 
 export async function POST(request: Request) {
@@ -10,7 +10,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, phone, formation } = body;
 
-    // Vérification basique des champs reçus
     if (!name || !email || !phone || !formation) {
       return NextResponse.json(
         { message: "Tous les champs sont requis." },
@@ -18,28 +17,37 @@ export async function POST(request: Request) {
       );
     }
 
-    // Envoi du mail via Resend vers ton adresse de réception
-    const data = await resend.emails.send({
-      from: "onboarding@resend.dev", // Expéditeur de test par défaut fourni par Resend
-      to: "hamidoucoulibaly576@gmail.com", // Ton adresse Gmail pour recevoir l'alerte
-      subject: `✨ Nouvelle inscription : ${formation}`,
+    const inscription = await prisma.inscription.create({
+      data: {
+        name: String(name).trim(),
+        email: String(email).trim(),
+        phone: String(phone).trim(),
+        formation: String(formation).trim(),
+        status: "PENDING",
+      },
+    });
+
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: "hamidoucoulibaly576@gmail.com",
+      subject: `✨ Nouvelle inscription : ${inscription.formation}`,
       html: `
         <h3>Détails du candidat :</h3>
-        <p><strong>Nom complet :</strong> ${name}</p>
-        <p><strong>Téléphone :</strong> ${phone}</p>
-        <p><strong>Email :</strong> ${email}</p>
-        <p><strong>Formation choisie :</strong> ${formation}</p>
+        <p><strong>Nom complet :</strong> ${inscription.name}</p>
+        <p><strong>Téléphone :</strong> ${inscription.phone}</p>
+        <p><strong>Email :</strong> ${inscription.email}</p>
+        <p><strong>Formation choisie :</strong> ${inscription.formation}</p>
       `,
     });
 
     return NextResponse.json(
-      { message: "Inscription reçue et email envoyé avec succès !", data },
+      { message: "Inscription enregistrée avec succès.", data: inscription },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Erreur d'envoi Resend :", error);
+    console.error("Erreur inscription :", error);
     return NextResponse.json(
-      { message: "Impossible d'envoyer la demande pour le moment." },
+      { message: "Impossible d'enregistrer la demande pour le moment." },
       { status: 500 }
     );
   }

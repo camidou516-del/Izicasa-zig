@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export default function ContactForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +15,19 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  useEffect(() => {
+    const providedSubject = searchParams.get('subject') || searchParams.get('service') || '';
+    const packName = searchParams.get('pack');
+    const nextSubject = providedSubject || (packName ? `Demande de devis - ${packName}` : '');
+
+    if (nextSubject) {
+      setFormData((prev) => ({
+        ...prev,
+        subject: nextSubject,
+      }));
+    }
+  }, [searchParams]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
@@ -22,13 +37,37 @@ export default function ContactForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulation d'une requête API (remplace par ton fetch / api / action plus tard)
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const isPackFlow = Boolean(searchParams.get('pack') || searchParams.get('source') === 'pack');
+      const endpoint = isPackFlow ? '/api/pack' : '/api/contact';
+      const payload = isPackFlow
+        ? {
+            ...formData,
+            packName: searchParams.get('pack') || formData.subject,
+          }
+        : {
+            ...formData,
+          };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || result?.message || 'Une erreur est survenue.');
+      }
+
       setSubmitted(true);
-      // Réinitialise le formulaire après envoi
       setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-    }, 1200);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue.';
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -55,12 +94,11 @@ export default function ContactForm() {
           {/* COLONNE DE GAUCHE : LE FORMULAIRE */}
           <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
             <h2 className="text-2xl font-bold text-[#004d31] mb-6 flex items-center gap-2">
-              📩 Envoie un message
+              Envoie un message
             </h2>
             
             {submitted ? (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-6 text-center space-y-3">
-                <span className="text-4xl">🎉</span>
                 <h3 className="text-lg font-bold">Message envoyé avec succès !</h3>
                 <p className="text-sm text-emerald-700 max-w-md mx-auto">
                   Merci de nous avoir contactés. Notre équipe à Ziguinchor va étudier votre demande et vous répondra dans les plus brefs délais.
@@ -129,7 +167,7 @@ export default function ContactForm() {
                       required
                       value={formData.subject}
                       onChange={handleChange}
-                      placeholder="Ex: Formation / Partenariat" 
+                      placeholder="Ex: Demande de devis / Prise de contact" 
                       className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004d31]" 
                     />
                   </div>
@@ -170,7 +208,7 @@ export default function ContactForm() {
               
               <div className="space-y-4 pt-2">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-50 text-[#004d31] mt-0.5">📍</div>
+                
                   <div>
                     <h4 className="text-sm font-semibold text-slate-800">Adresse</h4>
                     <p className="text-sm text-slate-600">Château d&apos;Eau, Ziguinchor 27000, Sénégal</p>
@@ -178,7 +216,7 @@ export default function ContactForm() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-50 text-[#004d31] mt-0.5">📞</div>
+                  
                   <div>
                     <h4 className="text-sm font-semibold text-slate-800">Téléphone</h4>
                     <p className="text-sm text-slate-600">+221 77 367 99 85</p>
@@ -186,7 +224,7 @@ export default function ContactForm() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-50 text-[#004d31] mt-0.5">🕒</div>
+                  
                   <div>
                     <h4 className="text-sm font-semibold text-slate-800">Horaires</h4>
                     <p className="text-sm text-slate-600">Lundi - Vendredi : 8h30 - 18h00</p>

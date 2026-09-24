@@ -8,13 +8,21 @@ export default function AnnouncementPopup() {
   const router = useRouter();
 
   useEffect(() => {
-    // COMMENTÉ POUR LE DEV : pour que ça s'affiche à chaque rafraîchissement
-    // const isClosedBefore = localStorage.getItem("announcement_closed");
-    // if (!isClosedBefore) {
-      const timer = setTimeout(() => setIsOpen(true), 1500);
-      return () => clearTimeout(timer);
-    // }
-  }, []);
+  // Récupère le nombre d'affichages déjà effectués
+  const showCount = parseInt(localStorage.getItem("announcement_show_count") || "0", 10);
+
+  // Si la pop-up s'est déjà affichée 2 fois ou plus, on ne fait rien
+  if (showCount >= 2) return;
+
+  // Déclenche l'affichage après 1 min 30 s (90 000 ms)
+  const timer = setTimeout(() => {
+    setIsOpen(true);
+    // Incrémente et sauvegarde le compteur d'affichages
+    localStorage.setItem("announcement_show_count", (showCount + 1).toString());
+  }, 90000);
+
+  return () => clearTimeout(timer);
+}, []);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -65,11 +73,11 @@ export default function AnnouncementPopup() {
             Formations du moment :
           </p>
           <p className="text-xs text-[#004d31] font-bold mt-1 bg-[#004d31]/10 inline-block px-2 py-0.5 rounded">
-            ⏱ Durée : 2 mois
+            Durée : 2 mois
           </p>
           
-          <p className="text-base font-bold text-gray-800 mt-2">🎥 Audio-visuel</p>
-          <p className="text-base font-bold text-gray-800 mt-1">💻 Marketing Digital</p>
+          <p className="text-base font-bold text-gray-800 mt-2">Audio-visuel</p>
+          <p className="text-base font-bold text-gray-800 mt-1">Marketing Digital</p>
         </div>
             
           <p className="text-sm text-gray-600 mb-6 leading-relaxed">

@@ -262,21 +262,20 @@ export default function CourseDetailsPage({ params }: { params: { slug: string }
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-emerald-800">
               <div className="flex items-center gap-3">
-                <span className="text-xl">📅</span>
                 <div>
                   <h4 className="text-xs text-emerald-300 font-medium">Durée flexible</h4>
                   <p className="text-sm font-semibold">Adapté à votre rythme ({course.duration})</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xl">🎓</span>
+                
                 <div>
                   <h4 className="text-xs text-emerald-300 font-medium">Certificat Pro</h4>
                   <p className="text-sm font-semibold">Reconnu par l&apos;État</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xl">💼</span>
+               
                 <div>
                   <h4 className="text-xs text-emerald-300 font-medium">Accompagnement</h4>
                   <p className="text-sm font-semibold">Insertion & Réseau</p>
@@ -288,7 +287,7 @@ export default function CourseDetailsPage({ params }: { params: { slug: string }
           {/* Bloc de Droite */}
           <div className="bg-white text-slate-800 rounded-3xl p-6 shadow-xl border border-slate-100 space-y-6">
             <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2 flex items-center gap-2">
-              <span className="text-emerald-700">🔥</span>
+
               <p className="text-xs font-semibold text-emerald-800">-10% pour tout paiement au comptant</p>
             </div>
 
@@ -325,7 +324,7 @@ export default function CourseDetailsPage({ params }: { params: { slug: string }
             <ReserveButton formationTitle={course.title} />
             <Sheet>
               <SheetTrigger className="w-full bg-[#004d3d] hover:bg-[#00362b] text-white py-4 rounded-xl font-bold transition-all shadow-md text-center block cursor-pointer">
-                Demander des informations
+                S&apos;inscrire
               </SheetTrigger>
               <SheetContent className="overflow-y-auto sm:max-w-[450px]">
                 <SheetHeader className="mb-4">
@@ -355,7 +354,7 @@ export default function CourseDetailsPage({ params }: { params: { slug: string }
           {/* Ce que vous allez maîtriser */}
           <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
             <h2 className="text-xl font-bold text-[#004d3d] mb-6 flex items-center gap-2">
-              🎯 Ce que vous allez maîtriser :
+              Ce que vous allez maîtriser :
             </h2>
             <ul className="space-y-4">
               {course.skills.map((skill, index) => (
@@ -370,7 +369,7 @@ export default function CourseDetailsPage({ params }: { params: { slug: string }
           {/* Livrables Portfolio */}
           <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
             <h2 className="text-xl font-bold text-[#004d3d] mb-6 flex items-center gap-2">
-              📁 Les livrables de votre portfolio :
+              Les livrables de votre portfolio :
             </h2>
             <ul className="space-y-4">
               {course.portfolioDeliverables.map((deliverable, index) => (

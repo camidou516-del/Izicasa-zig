@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, LogOut, Menu, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import type { SessionUser } from "@/lib/auth";
 
 const links = [
   { href: "/", label: "Accueil" },
@@ -26,19 +27,48 @@ const offerLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [isOffersOpen, setIsOffersOpen] = useState(false);
   const [isMobileOffersOpen, setIsMobileOffersOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const offersRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) {
+          setUser(null);
+          return;
+        }
+
+        const data = await response.json().catch(() => ({ user: null }));
+        setUser(data.user ?? null);
+      } catch {
+        setUser(null);
+      }
+    }
+
+    loadSession();
+  }, [pathname]);
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
       if (offersRef.current && !offersRef.current.contains(event.target as Node)) {
         setIsOffersOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
     }
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsOffersOpen(false);
+      if (event.key === "Escape") {
+        setIsOffersOpen(false);
+        setIsProfileOpen(false);
+      }
     }
 
     document.addEventListener("mousedown", handleOutsideClick);
@@ -48,6 +78,17 @@ export function Header() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      setUser(null);
+      setIsProfileOpen(false);
+      router.refresh();
+      router.push("/");
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0B6E4F] text-white shadow-sm">
@@ -139,10 +180,44 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-3 sm:flex">
-            <Link href="/login" className="text-sm font-semibold text-white transition hover:text-[#F6D94A]">Connexion</Link>
-            <Button asChild className="bg-[#f1c40f] text-[#004d3d] hover:bg-[#e5b90a]"><Link href="/register">S&apos;inscrire</Link></Button>
-          </div>
+          {user ? (
+            <div ref={profileRef} className="relative hidden sm:block">
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((current) => !current)}
+                className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-2 text-left transition hover:bg-white/10"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f1c40f] text-[#004d3d]">
+                  <User className="h-4 w-4" />
+                </span>
+                <span className="text-sm font-semibold text-white">{user.name.split(" ")[0]}</span>
+                <ChevronDown className={`h-4 w-4 text-white/80 transition-transform ${isProfileOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 text-slate-800 shadow-xl">
+                  <div className="border-b border-slate-200 px-3 py-2">
+                    <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{user.role === "ADMIN" ? "Administrateur" : "Membre IZICASA"}</p>
+                    <p className="mt-1 text-xs text-slate-500">{user.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700"
+                  >
+                    <LogOut className="h-4 w-4 text-red-600" />
+                    Déconnexion
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden items-center gap-3 sm:flex">
+              <Link href="/login" className="text-sm font-semibold text-white transition hover:text-[#F6D94A]">Connexion</Link>
+              <Button asChild className="bg-[#f1c40f] text-[#004d3d] hover:bg-[#e5b90a]"><Link href="/register">S&apos;inscrire</Link></Button>
+            </div>
+          )}
 
           <Sheet>
             <SheetTrigger className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/20 text-white md:hidden">
@@ -215,8 +290,32 @@ export function Header() {
                     {contactLink.label}
                   </span>
                 </SheetClose>
-                <Link href="/login" className="rounded-md px-3 py-2 font-semibold text-white">Connexion</Link>
-                <Button asChild className="mt-2 justify-center bg-[#f1c40f] text-[#004d3d] hover:bg-[#e5b90a]"><Link href="/register">S&apos;inscrire</Link></Button>
+                {user ? (
+                  <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1c40f] text-[#004d3d]">
+                        <User className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{user.name}</p>
+                        <p className="text-xs text-white/70">{user.role === "ADMIN" ? "Administrateur" : "Membre IZICASA"}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center justify-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 hover:text-red-700"
+                    >
+                      <LogOut className="h-4 w-4 text-red-600" />
+                      Déconnexion
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Link href="/login" className="rounded-md px-3 py-2 font-semibold text-white">Connexion</Link>
+                    <Button asChild className="mt-2 justify-center bg-[#f1c40f] text-[#004d3d] hover:bg-[#e5b90a]"><Link href="/register">S&apos;inscrire</Link></Button>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

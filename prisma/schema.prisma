@@ -1,17 +1,44 @@
-datasource db {
-  provider = "postgresql"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum InscriptionStatus {
+  PENDING
+  CONFIRMED
+}
+
 model Inscription {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   name      String
   email     String
   phone     String
   formation String
+  status    InscriptionStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+}
+
+model QuoteRequest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model PackOrder {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  packName  String
   createdAt DateTime @default(now())
 }
 
@@ -50,3 +77,4 @@ model Reservation {
 
   @@index([userId])
 }
+

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, MessageCircle, Sparkles } from "lucide-react";
+import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Nos packs | Izicasa Sénégal",
@@ -103,9 +104,10 @@ const packs = [
   },
 ];
 
-export const dynamic = "force-static";
+export default async function PacksPage() {
+  const session = await getSession();
+  const isAuthenticated = Boolean(session);
 
-export default function PacksPage() {
   return (
     <main className="min-h-screen bg-slate-50 pb-20">
       <section className="w-full bg-[#004d3d] px-6 py-20 text-center text-white">
@@ -144,17 +146,37 @@ export default function PacksPage() {
                 <span className={`font-heading text-3xl font-black ${pack.priceClassName}`}>{pack.price}</span>
                 <span className="ml-2 text-sm font-semibold opacity-70">FCFA / mois</span>
               </div>
-              <ul className="mt-6 flex-1 space-y-3">
-                {pack.features.map((feature) => (
-                  <li key={feature} className="flex gap-3 text-sm leading-relaxed opacity-90">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0B6E4F]" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/contact" className="mt-8 inline-flex items-center justify-center gap-2 border border-current/25 px-4 py-3 text-sm font-bold transition hover:bg-current/10">
-                Choisir cette formule <ArrowRight className="h-4 w-4" />
-              </Link>
+
+              {!isAuthenticated ? (
+                <>
+                  <p className="mt-6 text-sm leading-relaxed opacity-80">
+                    Connectez-vous pour débloquer le détail complet des avantages inclus.
+                  </p>
+                  <Link
+                    href={`/login?callbackUrl=${encodeURIComponent("/packs")}`}
+                    className="mt-8 inline-flex items-center justify-center gap-2 border border-current/25 px-4 py-3 text-sm font-bold transition hover:bg-current/10"
+                  >
+                    Choisir ce pack <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <ul className="mt-6 flex-1 space-y-3">
+                    {pack.features.map((feature) => (
+                      <li key={feature} className="flex gap-3 text-sm leading-relaxed opacity-90">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0B6E4F]" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={`/contact?pack=${encodeURIComponent(pack.name)}&subject=${encodeURIComponent(pack.name)}`}
+                    className="mt-8 inline-flex items-center justify-center gap-2 border border-current/25 px-4 py-3 text-sm font-bold transition hover:bg-current/10"
+                  >
+                    Choisir ce pack <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              )}
             </article>
           ))}
         </div>
