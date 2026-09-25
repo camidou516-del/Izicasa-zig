@@ -165,24 +165,73 @@ function getInvoiceAmountForLabel(label: string, explicitPrice?: number | null) 
   return 0;
 }
 
-function getInvoiceHtml({
-  name,
-  phone,
-  objectLabel,
-  amount,
-  invoiceId,
-}: {
-  name: string;
+type InvoiceDraft = {
+  id: string;
+  customerName: string;
+  email: string;
   phone: string;
-  objectLabel: string;
+  itemName: string;
+  object: string;
+  description: string;
   amount: number;
-  invoiceId: string;
-}) {
-  const formattedAmount = `${formatAmount(amount)} FCFA`;
-  const invoiceNumber = `IZI-ACO-${invoiceId.slice(-6).toUpperCase()}`;
-  const invoiceDate = new Date().toLocaleDateString("fr-FR");
-  const amountInWords = amountToWords(amount);
-  const shouldShowNbNotice = /production audiovisuelle|audiovisuelle|prise d['’]image|prise de vue|vid[eé]o/i.test(objectLabel);
+  discount: number;
+  invoiceNumber: string;
+  invoiceDate: string;
+};
+
+function createDefaultInvoiceDraft({
+  id,
+  customerName,
+  email,
+  phone,
+  itemName,
+  itemType,
+  amount,
+}: {
+  id: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  itemName: string;
+  itemType: "inscription" | "quote" | "pack";
+  amount: number;
+}): InvoiceDraft {
+  const year = new Date().getFullYear();
+  const objectMap = {
+    inscription: `Facture pour la formation ${itemName}`,
+    quote: `Facture pour ${itemName}`,
+    pack: `Facture pour le pack ${itemName}`,
+  };
+
+  const descriptionMap = {
+    inscription: `Inscription à la formation ${itemName}. Le client bénéficie du programme, du support pédagogique, et des ressources associées selon les conditions convenues avec Izicasa Sénégal.`,
+    quote: `Prestation relative à ${itemName}. Le devis couvre les services et livrables définis lors de la demande de devis et validés par le client.`,
+    pack: `Commande du pack ${itemName}. Le montant correspond aux prestations incluses dans le pack sélectionné, selon la convention commerciale validée.`,
+  };
+
+  return {
+    id,
+    customerName,
+    email,
+    phone,
+    itemName,
+    object: objectMap[itemType],
+    description: descriptionMap[itemType],
+    amount,
+    discount: 0,
+    invoiceNumber: `FACT-${year}-${id.slice(-6).toUpperCase()}`,
+    invoiceDate: new Date().toISOString().slice(0, 10),
+  };
+}
+
+function getInvoiceHtml(invoice: InvoiceDraft) {
+  const netAmount = Math.max(0, invoice.amount - (invoice.discount || 0));
+  const formattedAmount = `${formatAmount(netAmount)} FCFA`;
+  const invoiceNumber = invoice.invoiceNumber || `IZI-ACO-${invoice.id.slice(-6).toUpperCase()}`;
+  const invoiceDate = invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString("fr-FR") : new Date().toLocaleDateString("fr-FR");
+  const amountInWords = amountToWords(netAmount);
+  const shouldShowNbNotice = /production audiovisuelle|audiovisuelle|prise d['’]image|prise de vue|vid[eé]o/i.test(`${invoice.object} ${invoice.description}`);
+  const discountAmount = Number(invoice.discount || 0);
 
   return `
     <html>
@@ -475,14 +524,19 @@ function getInvoiceHtml({
                 <span class="label">Facture</span>
                 <p><strong>Facture N° :</strong> ${invoiceNumber}</p>
                 <p><strong>Date :</strong> ${invoiceDate}</p>
-                <p><strong>Objet :</strong> ${objectLabel}</p>
+                <p><strong>Objet :</strong> ${invoice.object}</p>
               </div>
 
               <div class="meta-box">
                 <span class="label">Client</span>
-                <p><strong>Client :</strong> ${name}</p>
-                <p><strong>Tél :</strong> ${phone || "Téléphone non renseigné"}</p>
+                <p><strong>Client :</strong> ${invoice.customerName}</p>
+                <p><strong>Email :</strong> ${invoice.email || "Email non renseigné"}</p>
+                <p><strong>Tél :</strong> ${invoice.phone || "Téléphone non renseigné"}</p>
               </div>
+            </div>
+
+            <div class="summary-box" style="margin-bottom: 12px;">
+              <p><strong>Description :</strong> ${invoice.description || "Prestations conforme à la commande et au devis validé."}</p>
             </div>
 
             <table>
@@ -497,8 +551,8 @@ function getInvoiceHtml({
               <tbody>
                 <tr>
                   <td class="qty-cell">1</td>
-                  <td>${objectLabel}</td>
-                  <td class="amount-col">${formattedAmount}</td>
+                  <td>${invoice.itemName}</td>
+                  <td class="amount-col">${formatAmount(invoice.amount)} FCFA</td>
                   <td class="amount-col"><strong>${formattedAmount}</strong></td>
                 </tr>
               </tbody>
@@ -507,12 +561,13 @@ function getInvoiceHtml({
             <div class="summary">
               <div class="summary-box">
                 <p><strong>Modalité de paiement :</strong> 100 % à la commande</p>
-                <p><strong>Facturé à :</strong> ${amount > 0 ? `${amountInWords} FCFA` : "Sur devis"}</p>
-                <p><strong>Reliquat à payer :</strong> ${amount > 0 ? "0 FCFA" : "À déterminer"}</p>
+                <p><strong>Facturé à :</strong> ${netAmount > 0 ? `${amountInWords} FCFA` : "Sur devis"}</p>
+                <p><strong>Reliquat à payer :</strong> ${netAmount > 0 ? "0 FCFA" : "À déterminer"}</p>
               </div>
 
               <div class="total-box">
                 <div class="total-row"><span>MONTANT TOTAL HT</span><span>${formattedAmount}</span></div>
+                <div class="total-row"><span>Remise / réduction</span><span>-${formatAmount(discountAmount)} FCFA</span></div>
                 <div class="total-row"><span>TVA (00 %)</span><span>0 FCFA</span></div>
                 <div class="total-row total"><span>MONTANT TOTAL TTC</span><span>${formattedAmount}</span></div>
               </div>
@@ -575,64 +630,90 @@ export function AdminReservations({
     user.reservations.map((reservation) => ({ user, reservation }))
   );
 
-  const openInvoiceWindow = (inscription: AdminInscription) => {
-    const invoiceWindow = window.open("", "_blank", "width=1000,height=1100");
+  const [invoiceEditor, setInvoiceEditor] = useState<InvoiceDraft | null>(null);
+
+  const openInvoiceEditor = ({
+    id,
+    customerName,
+    email,
+    phone,
+    itemName,
+    itemType,
+    amount,
+  }: {
+    id: string;
+    customerName: string;
+    email: string;
+    phone: string;
+    itemName: string;
+    itemType: "inscription" | "quote" | "pack";
+    amount: number;
+  }) => {
+    setInvoiceEditor(
+      createDefaultInvoiceDraft({
+        id,
+        customerName,
+        email,
+        phone,
+        itemName,
+        itemType,
+        amount,
+      })
+    );
+  };
+
+  const handleInvoiceDownload = (invoice: InvoiceDraft) => {
+    const invoiceWindow = window.open("", "_blank", "width=1100,height=1400");
     if (!invoiceWindow) {
       return;
     }
 
-    const formationLabel = inscription.formation || "Formation non précisée";
-    const amount = getInvoiceAmountForLabel(formationLabel, inscription.price ?? null);
-    invoiceWindow.document.write(getInvoiceHtml({
-      name: inscription.name,
-      phone: inscription.phone,
-      objectLabel: `Inscription Formation : ${formationLabel}`,
-      amount,
-      invoiceId: inscription.id,
-    }));
+    invoiceWindow.document.write(getInvoiceHtml(invoice));
     invoiceWindow.document.close();
     setTimeout(() => invoiceWindow.focus(), 200);
-    setTimeout(() => invoiceWindow.print(), 500);
+    setTimeout(() => invoiceWindow.print(), 400);
+  };
+
+  const openInvoiceWindow = (inscription: AdminInscription) => {
+    const itemName = inscription.formation || "Formation non précisée";
+    const amount = getInvoiceAmountForLabel(itemName, inscription.price ?? null);
+    openInvoiceEditor({
+      id: inscription.id,
+      customerName: inscription.name,
+      email: inscription.email,
+      phone: inscription.phone,
+      itemName,
+      itemType: "inscription",
+      amount,
+    });
   };
 
   const openQuoteInvoiceWindow = (quote: AdminQuoteRequest) => {
-    const invoiceWindow = window.open("", "_blank", "width=1000,height=1100");
-    if (!invoiceWindow) {
-      return;
-    }
-
-    const label = quote.subject || "Demande de devis";
-    const amount = getInvoiceAmountForLabel(label, quote.price ?? null);
-    invoiceWindow.document.write(getInvoiceHtml({
-      name: quote.name,
+    const itemName = quote.subject || "Demande de devis";
+    const amount = getInvoiceAmountForLabel(itemName, quote.price ?? null);
+    openInvoiceEditor({
+      id: quote.id,
+      customerName: quote.name,
+      email: quote.email,
       phone: quote.phone,
-      objectLabel: `Demande de Devis : ${label}`,
+      itemName,
+      itemType: "quote",
       amount,
-      invoiceId: quote.id,
-    }));
-    invoiceWindow.document.close();
-    setTimeout(() => invoiceWindow.focus(), 200);
-    setTimeout(() => invoiceWindow.print(), 500);
+    });
   };
 
   const openPackInvoiceWindow = (pack: AdminPackOrder) => {
-    const invoiceWindow = window.open("", "_blank", "width=1000,height=1100");
-    if (!invoiceWindow) {
-      return;
-    }
-
-    const label = pack.packName || "Pack non précisé";
-    const amount = getInvoiceAmountForLabel(label, pack.price ?? null);
-    invoiceWindow.document.write(getInvoiceHtml({
-      name: pack.name,
+    const itemName = pack.packName || "Pack non précisé";
+    const amount = getInvoiceAmountForLabel(itemName, pack.price ?? null);
+    openInvoiceEditor({
+      id: pack.id,
+      customerName: pack.name,
+      email: pack.email,
       phone: pack.phone,
-      objectLabel: `Commande Pack : ${label}`,
+      itemName,
+      itemType: "pack",
       amount,
-      invoiceId: pack.id,
-    }));
-    invoiceWindow.document.close();
-    setTimeout(() => invoiceWindow.focus(), 200);
-    setTimeout(() => invoiceWindow.print(), 500);
+    });
   };
 
   const handleEditOpen = (inscription: AdminInscription) => {
@@ -955,6 +1036,17 @@ export function AdminReservations({
         </section>
       )}
 
+      {invoiceEditor && (
+        <InvoiceEditorModal
+          draft={invoiceEditor}
+          onClose={() => setInvoiceEditor(null)}
+          onDownload={(invoice) => {
+            setInvoiceEditor(null);
+            handleInvoiceDownload(invoice);
+          }}
+        />
+      )}
+
       {selected && <InvoiceDialog data={selected} onClose={() => setSelected(null)} />}
 
       {editingInscription && (
@@ -1039,6 +1131,219 @@ export function AdminReservations({
         </div>
       )}
     </>
+  );
+}
+
+function InvoiceEditorModal({
+  draft,
+  onClose,
+  onDownload,
+}: {
+  draft: InvoiceDraft;
+  onClose: () => void;
+  onDownload: (draft: InvoiceDraft) => void;
+}) {
+  const [form, setForm] = useState<InvoiceDraft>(draft);
+  const netAmount = Math.max(0, Number(form.amount || 0) - Number(form.discount || 0));
+
+  return (
+    <div className="fixed inset-0 z-[90] overflow-y-auto bg-slate-950/60 p-4 sm:p-8" role="dialog" aria-modal="true" aria-labelledby="invoice-editor-title">
+      <div className="mx-auto max-w-6xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#004d3d]">Prévisualisation & édition</p>
+            <h3 id="invoice-editor-title" className="mt-1 text-xl font-bold text-slate-900">Facture</h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer la facture"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              onDownload(form);
+            }}
+            className="space-y-4"
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2 text-sm font-medium text-slate-700 md:col-span-2">
+                <span>Objet de la facture</span>
+                <input
+                  value={form.object}
+                  onChange={(event) => setForm((current) => ({ ...current, object: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700 md:col-span-2">
+                <span>Description détaillée des prestations</span>
+                <textarea
+                  value={form.description}
+                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                  rows={5}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Nom complet du client</span>
+                <input
+                  value={form.customerName}
+                  onChange={(event) => setForm((current) => ({ ...current, customerName: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Adresse email</span>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Téléphone</span>
+                <input
+                  value={form.phone}
+                  onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Intitulé du pack / service / formation</span>
+                <input
+                  value={form.itemName}
+                  onChange={(event) => setForm((current) => ({ ...current, itemName: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Montant total (FCFA)</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.amount}
+                  onChange={(event) => setForm((current) => ({ ...current, amount: Number(event.target.value) || 0 }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Remise / réduction (optionnel)</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.discount}
+                  onChange={(event) => setForm((current) => ({ ...current, discount: Number(event.target.value) || 0 }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Numéro de facture</span>
+                <input
+                  value={form.invoiceNumber}
+                  onChange={(event) => setForm((current) => ({ ...current, invoiceNumber: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                <span>Date de facturation</span>
+                <input
+                  type="date"
+                  value={form.invoiceDate}
+                  onChange={(event) => setForm((current) => ({ ...current, invoiceDate: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 outline-none transition focus:border-[#004d3d] focus:bg-white"
+                  required
+                />
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl bg-[#004d3d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003328]"
+              >
+                Valider et Télécharger le PDF
+              </button>
+            </div>
+          </form>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#004d3d]">Aperçu</p>
+                  <h4 className="mt-1 text-lg font-bold text-slate-900">{form.object}</h4>
+                </div>
+                <div className="text-right text-xs text-slate-500">
+                  <div className="font-semibold text-slate-800">{form.invoiceNumber}</div>
+                  <div>{new Date(form.invoiceDate || new Date().toISOString().slice(0, 10)).toLocaleDateString("fr-FR")}</div>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                <div>
+                  <span className="font-semibold text-slate-800">Client :</span> {form.customerName}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-800">Email :</span> {form.email}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-800">Téléphone :</span> {form.phone}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-800">Prestation :</span> {form.itemName}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+                <span className="font-semibold text-slate-800">Description :</span>
+                <p className="mt-2 whitespace-pre-line">{form.description}</p>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+                <span className="text-sm text-slate-500">Montant total</span>
+                <div className="text-right">
+                  <div className="text-xl font-black text-[#004d3d]">{formatAmount(netAmount)} FCFA</div>
+                  {Number(form.discount || 0) > 0 && (
+                    <div className="text-xs text-slate-500">Réduction : -{formatAmount(Number(form.discount || 0))} FCFA</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
