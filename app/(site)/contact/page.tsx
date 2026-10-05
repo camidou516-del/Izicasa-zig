@@ -1,4 +1,5 @@
 import React from 'react';
+import { Suspense } from "react";
 import { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
 import ContactForm from "@/components/contact/ContactPageClient";
@@ -12,5 +13,9 @@ export function generateMetadata(): Metadata {
 }
 
 export default function ContactPage() {
-  return <ContactForm />;
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <ContactForm />
+    </Suspense>
+  );
 }
